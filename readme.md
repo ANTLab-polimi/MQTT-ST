@@ -2,7 +2,7 @@ MQTT-ST: a Mosquitto fork
 =================
 
 MQTT-ST is a MQTT broker which is able to create a distribute architecture of brokers, organized thorugh a spanning tree.
-It based on the open source Mosquitto broker implementation. Our version mainly adds a feature for interconnecting MQTT brokers automatically in a loop-free topology. Other Mosquitto features remain inalterated. 
+It is based on the open source Mosquitto broker implementation. Our version adds a feature for interconnecting MQTT brokers automatically in a loop-free topology. Other Mosquitto features remain inalterated. 
 
 ## Links
 
