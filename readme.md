@@ -1,84 +1,80 @@
-Eclipse Mosquitto
+MQTT-ST: a Mosquitto fork
 =================
 
-Mosquitto is an open source implementation of a server for version 5.0, 3.1.1,
-and 3.1 of the MQTT protocol. It also includes a C and C++ client library, and
-the `mosquitto_pub` and `mosquitto_sub` utilities for publishing and
-subscribing.
+MQTT-ST is a MQTT broker which is able to create a distribute architecture of brokers, organized thorugh a spanning tree.
+It based on the open source Mosquitto broker implementation. Our version mainly adds a feature for interconnecting MQTT brokers automatically in a loop-free topology. Other Mosquitto features remain inalterated. 
 
 ## Links
 
-See the following links for more information on MQTT:
+See the following links for more information on MQTT-ST:
 
-- Community page: <http://mqtt.org/>
-- MQTT v3.1.1 standard: <https://docs.oasis-open.org/mqtt/mqtt/v3.1.1/mqtt-v3.1.1.html>
-- MQTT v5.0 standard: <https://docs.oasis-open.org/mqtt/mqtt/v5.0/mqtt-v5.0.html>
+- Arxiv paper: <https://arxiv.org/pdf/1911.07622.pdf>
+- Source code Mosquitto repository: <https://github.com/eclipse/mosquitto>
+- Source code repository: <https://github.com/edoardesd/mosquitto>
 
-Mosquitto project information is available at the following locations:
+Creator information is available at the following locations:
 
-- Main homepage: <https://mosquitto.org/>
-- Find existing bugs or submit a new bug: <https://github.com/eclipse/mosquitto/issues>
-- Source code repository: <https://github.com/eclipse/mosquitto>
+- Research group webpage: <http://www.antlab.polimi.it>
+- Developer github: <https://github.com/edoardesd>
 
-There is also a public test server available at <https://test.mosquitto.org/>
 
 ## Installing
 
-See <https://mosquitto.org/download/> for details on installing binaries for
-various platforms.
+Installing MQTT-ST is as installing Mosquitto. 
+See the official documentation at <https://mosquitto.org/download/> for details on installing binaries for
+various platforms. 
 
-## Quick start
+## Cluster quick start
 
-If you have installed a binary package the broker should have been started
-automatically. If not, it can be started with a basic configuration:
+Also the quick start for a single broker is the same as Mosquitto. More information at: <https://github.com/eclipse/mosquitto#quick-start>.
 
-    mosquitto
+If you want to create a cluster of brokers, each broker must be spawned manually with a valid configuration file, i.e. `mosquitto -c mosquitto.conf`
 
-Then use `mosquitto_sub` to subscribe to a topic:
+## Configuration file
 
-    mosquitto_sub -t 'test/topic' -v
+MQTT-ST provides a mechanism for interconnecting automatically Mosquitto brokers in a loop free fashion. It is based on the bridging feature provided by Mosquitto (<https://mosquitto.org/man/mosquitto-conf-5.html>). 
 
-And to publish a message:
+The bridges are created through the `mosquitto.conf` file. Every broker in the cluster must have a valid configuration file. The file includes a valid bridge to all the others brokers in the cluster. It consists in:
+- arbitrary connection name
+- broker destination address
+- broker destination port (if different to the default port 1883)
+- topic included in the cluster
+- topic forwarding option: it **must** be `out` for ensuring the correct behaviour. See <https://mosquitto.org/man/mosquitto-conf-5.html> for more details
+- QoS option: high QoS is suggested
+- remote broker id: anyone
 
-    mosquitto_pub -t 'test/topic' -m 'hello world'
+### Example
+Here we show an example of a cluster composed by MQTT-ST brokers. For the sake of simplicity, only 3 brokers are used: A, B and C. However, MQTT-ST can support as many brokers as your machine can start.
 
-## Documentation
+Every broker in the cluster must be bridged to every one else. Each broker has a different .conf file containing bridges towards all the others brokers.
 
-Documentation for the broker, clients and client library API can be found in
-the man pages, which are available online at <https://mosquitto.org/man/>. There
-are also pages with an introduction to the features of MQTT, the
-`mosquitto_passwd` utility for dealing with username/passwords, and a
-description of the configuration file options available for the broker.
+For instance, broker A configuration file:
+```
+connection AtoB
+address 192.168.1.3:1883
+topic # out 2
+remote_clientid AtoB
 
-Detailed client library API documentation can be found at <https://mosquitto.org/api/>
+connection AtoC
+address 192.168.1.4:1883
+topic # out 2
+remote_clientid AtoC
+```
+Broker C configuration file:
+```
+connection BtoA
+address 192.168.1.2:1883
+topic # out 2
+remote_clientid BtoA
 
-## Building from source
+connection BtoC
+address 192.168.1.4:1883
+topic # out 2
+remote_clientid BtoC
+```
+And so on...
 
-To build from source the recommended route for end users is to download the
-archive from <https://mosquitto.org/download/>.
-
-On Windows and Mac, use `cmake` to build. On other platforms, just run `make`
-to build. For Windows, see also `readme-windows.md`.
-
-If you are building from the git repository then the documentation will not
-already be built. Use `make binary` to skip building the man pages, or install
-`docbook-xsl` on Debian/Ubuntu systems.
-
-### Build Dependencies
-
-* c-ares (libc-ares-dev on Debian based systems) - only when compiled with `make WITH_SRV=yes`
-* libwebsockets (libwebsockets-dev) - enable with `make WITH_WEBSOCKETS=yes`
-* openssl (libssl-dev on Debian based systems) - disable with `make WITH_TLS=no`
-* xsltproc (xsltproc and docbook-xsl on Debian based systems) - only needed when building from git sources - disable with `make WITH_DOCS=no`
-* uthash / utlist - bundled versions of these headers are provided, disable their use with `make WITH_BUNDLED_DEPS=no`
-
-Equivalent options for enabling/disabling features are available when using the CMake build.
-
-
-## Credits
-
-Mosquitto was written by Roger Light <roger@atchoo.org>
-
-Master: [![Travis Build Status (master)](https://travis-ci.org/eclipse/mosquitto.svg?branch=master)](https://travis-ci.org/eclipse/mosquitto)
-Develop: [![Travis Build Status (develop)](https://travis-ci.org/eclipse/mosquitto.svg?branch=develop)](https://travis-ci.org/eclipse/mosquitto)
-Fixes: [![Travis Build Status (fixes)](https://travis-ci.org/eclipse/mosquitto.svg?branch=fixes)](https://travis-ci.org/eclipse/mosquitto)
+## Future works
+- Develop a script which creates valid configuration files
+- Automatic discovery of MQTT-SN brokers
+- Create a tree for each topic in the syste 
